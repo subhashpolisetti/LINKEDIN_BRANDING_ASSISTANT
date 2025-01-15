@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Job Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/stle.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .loader {
+            border: 4px solid rgba(107, 70, 193, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .profile-button {
+            background-color: rgba(107, 70, 193, 0.1);
+            color: var(--primary);
+            padding: 8px 16px;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        .profile-button:hover {
+            background-color: rgba(107, 70, 193, 0.2);
+            transform: translateY(-1px);
+        }
+        .logout-button {
+            background-color: rgba(229, 62, 62, 0.1);
+            color: var(--error);
+            padding: 8px 16px;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .logout-button:hover {
+            background-color: rgba(229, 62, 62, 0.2);
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-white shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <a href="/" class="text-xl font-bold text-primary">LinkedIn Job Assistant</a>
+                <div class="flex items-center gap-6">
+                    <nav class="flex items-center gap-6">
+                        <a href="/upload">Resume Analysis</a>
+                        <a href="/jobs" class="active">Latest Jobs</a>
+                        <a href="/linkedInProfileAssistant">Profile Assistant</a>
+                    </nav>
+                    {% if user %}
+                    <div class="flex items-center gap-4">
+                        <div class="profile-button">
+                            <i class="fas fa-user-circle"></i>
+                            <span class="truncate max-w-[200px]">{{ user.email }}</span>
+                        </div>
+                        <a href="/logout" class="logout-button">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8">
+        {% if not user %}
+            <div class="text-center py-12">
+                <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-8">
+                    <i class="fas fa-user-circle text-6xl text-primary mb-6"></i>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-4">Welcome to LinkedIn Job Assistant</h1>
+                    <p class="text-gray-600 mb-8 text-lg">Your intelligent career companion for job search and resume optimization.</p>
+                    <a href="/login" class="btn-primary inline-flex items-center gap-2">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Login to Continue
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">Latest Jobs</h1>
+                <button onclick="refreshJobs()" class="btn-primary flex items-center gap-2">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh Jobs
+                </button>
+            </div>
+
+            <div id="loader" class="hidden flex justify-center items-center py-8">
+                <div class="loader"></div>
+            </div>
+
+            <div id="jobsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Jobs will be dynamically inserted here -->
+            </div>
+
+            <div id="noJobs" class="hidden">
+                <div class="bg-white rounded-lg shadow-lg p-8 text-center">
+                    <i class="fas fa-briefcase text-5xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600 text-lg mb-4">No jobs available at the moment.</p>
+                    <p class="text-gray-500">Check back later for new opportunities!</p>
+                </div>
+            </div>
+
+            <!-- Resume Analysis CTA -->
+            <div class="mt-12">
+                <div class="bg-white rounded-lg shadow-lg p-8 text-center">
+                    <i class="fas fa-file-alt text-5xl text-primary mb-4"></i>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Want to check if your resume matches these jobs?</h2>
+                    <p class="text-gray-600 mb-6">Upload your resume and get instant feedback on how well it matches job requirements.</p>
+                    <a href="/upload" class="btn-primary inline-flex items-center gap-2">
+                        <i class="fas fa-upload"></i>
+                        Analyze Your Resume
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <script>
+        function formatTimeAgo(timestamp) {
+            const now = new Date();
+            const jobDate = new Date(timestamp);
+            const diffMinutes = Math.floor((now - jobDate) / 1000 / 60);
+            
+            if (diffMinutes < 1) return 'Just now';
+            if (diffMinutes === 1) return '1 minute ago';
+            if (diffMinutes < 60) return `${diffMinutes} minutes ago`;
+            if (diffMinutes < 120) return '1 hour ago';
+            if (diffMinutes < 1440) return `${Math.floor(diffMinutes / 60)} hours ago`;
+            if (diffMinutes < 2880) return '1 day ago';
+            return `${Math.floor(diffMinutes / 1440)} days ago`;
+        }
+
+        function createJobCard(job) {
+            return `
+                <div class="job-card p-6">
+                    <h2 class="job-title">${job.title}</h2>
+                    <p class="company-name">
+                        <i class="fas fa-building mr-2"></i>
+                        ${job.companyName}
+                    </p>
+                    <div class="flex justify-between items-center text-sm text-gray-500 mb-4">
+                        <span>
+                            <i class="fas fa-clock mr-1"></i>
+                            ${formatTimeAgo(job.listedAt)}
+                        </span>
+                    </div>
+                    <a href="${job.jobPostingUrl}" target="_blank" class="view-job-btn w-full text-center">
+                        <i class="fas fa-external-link-alt mr-2"></i>
+                        View Job
+                    </a>
+                </div>
+            `;
+        }
+
+        async function refreshJobs() {
+            const loader = document.getElementById('loader');
+            const jobsContainer = document.getElementById('jobsContainer');
+            const noJobs = document.getElementById('noJobs');
+
+            loader.classList.remove('hidden');
+            jobsContainer.innerHTML = '';
+            noJobs.classList.add('hidden');
+
+            try {
+                const response = await fetch('/api/jobs');
+                const jobs = await response.json();
+
+                if (jobs.length === 0) {
+                    noJobs.classList.remove('hidden');
+                } else {
+                    jobs.forEach(job => {
+                        jobsContainer.innerHTML += createJobCard(job);
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching jobs:', error);
+                alert('Failed to fetch jobs. Please try again.');
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+        {% if user %}
+            // Load jobs when page loads only if user is logged in
+            refreshJobs();
+        {% endif %}
+    </script>
+</body>
+</html>

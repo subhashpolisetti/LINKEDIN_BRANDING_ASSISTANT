@@ -1,0 +1,15 @@
+streamlit
+PyPDF2
+google-generativeai
+python-dotenv
+pymongo
+flask-pymongo
+authlib
+werkzeug
+requests
+redis
+boto3
+openai==0.27.8
+python-multipart==0.0.6
+flask
+gunicorn
