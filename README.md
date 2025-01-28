@@ -1,6 +1,4 @@
-<<<<<<< HEAD
-# LINKEDIN_BRANDING_ASSISTANT
-=======
+
 # LinkedIn Branding Assistant
 
 A powerful web application that helps users optimize their LinkedIn profiles and job applications using AI-powered analysis.
