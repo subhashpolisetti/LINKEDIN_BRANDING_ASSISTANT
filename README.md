@@ -136,4 +136,3 @@ python app.py
 
 
 
->>>>>>> 78735cc (linkedin-branding-assitant changes ms sem-1 project changes)
